@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tirar Foto com Cordova</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+
+<body id="conteudo" data-bs-theme="light">
+    <h1>Captura de Imagem com Cordova</h1>
+
+    <form id="myForm">
+        <button type="button" class="btn btn-primary" id="captureBtn">Tirar Foto</button>
+
+        <div>
+            <img id="capturedImage" alt="Imagem capturada aparecerá aqui" style="max-width: 100%; margin-top: 10px;">
+        </div>
+
+        <button type="button" class="btn btn-success" id="btn" onclick="sendData()">Enviar</button>
+    </form>
+
+    <p id="saida"></p>
+
+    <script src="cordova.js"></script>
+    <script src="js/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+    <script>
+        let imageData = ''; // Variável global para armazenar os dados da imagem
+
+        // Função para capturar uma foto usando o plugin da câmera do Cordova
+        document.getElementById('captureBtn').addEventListener('click', function () {
+            navigator.camera.getPicture(onSuccess, onFail, {
+                quality: 50, // Qualidade da imagem (0 a 100)
+                destinationType: Camera.DestinationType.DATA_URL, // Retorna a imagem em formato base64
+                saveToPhotoAlbum: true, // Salva no álbum de fotos
+                sourceType: Camera.PictureSourceType.CAMERA // Abre diretamente a câmera
+            });
+        });
+
+        // Função chamada quando a captura da foto for bem-sucedida
+        function onSuccess(data) {
+            imageData = data; // Armazena a imagem capturada em base64
+
+            var image = document.getElementById('capturedImage');
+            image.src = "data:image/jpeg;base64," + imageData; // Exibir a imagem capturada
+        }
+
+        function onFail(message) {
+            alert('Falha ao capturar a foto: ' + message);
+        }
+
+        function sendData() {
+            const apiKey = '';
+            const formData = new FormData();
+            formData.append('image', imageData);
+            fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Upload bem-sucedido:', data);
+                    document.getElementById('saida').innerHTML = `URL da imagem: ${data.data.url}`;
+                } else {
+                    console.error('Erro no upload:', data);
+                    alert(`Erro no upload: ${data.error.message}`);
+                }
+            })
+            .catch(error => {
+                console.error('Erro na requisição:', error);
+                alert('Erro ao fazer upload da imagem.');
+            });
+        }
+    </script>
+</body>
+
+</html>
